@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
-import { VRM, VRMUtils } from '@pixiv/three-vrm';
+import { VRM, VRMUtils, VRMSchema } from '@pixiv/three-vrm';
 
 const vrmFilePath='./static/test.vrm';
 
@@ -42,7 +42,7 @@ loader.load(
         VRM.from( gltf ).then( ( vrm ) => {
             console.log( vrm );
             scene.add( vrm.scene );
-            vrm.humanoid.getBoneNode( THREE.VRMSchema.HumanoidBoneName.Hips ).rotation.y = Math.PI;
+            vrm.humanoid.getBoneNode( VRMSchema.HumanoidBoneName.Hips ).rotation.y = Math.PI;
         } );
     },
     // called while loading is progressing
