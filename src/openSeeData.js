@@ -2,6 +2,10 @@ const THREE = require('three');
 
 const nPoints = 68;
 
+function flipBits(n) {
+  return parseInt(n.toString(2).split('').map(bit => 1 - bit).join(''), 2);
+}
+
 function readFloat(data) {
 	let { buffer=[], offset=0} = data;
 	let view = new DataView(new ArrayBuffer(4));
@@ -14,13 +18,10 @@ function readFloat(data) {
 }
 
 function readDouble(data) {
-	let { buffer=[], offset=0} = data;
-	let view = new DataView(new ArrayBuffer(8));
-	for(let i=0; i < 8; i++){
-		view.setUint8(i, buffer[offset + i]);
-	}
-  let value = view.getFloat64(0);
+  let {buffer, offset=0} = data;
+  let value = buffer.readDoubleLE(offset);
   data.offset += 8;
+  console.log(`value: ${value}, offset: ${data.offset}`);
   return value;
 }
 
@@ -129,69 +130,78 @@ class OpenSeeData {
   	this.features = new OpenSeeFeatures();
 	}
   
-  readFromPacket(data={buffer:[], offset:0}) {
+  readFromPacket(data) {
     this.time = readDouble(data);
-    this.id = readInt(data);
-    this.cameraResolution = readVector2(data);
-    this.rightEyeOpen = readFloat(data);
-    this.leftEyeOpen = readFloat(data);
-    
-		let got3D = data.buffer[data.offset];
-    data.offset++;
-    if (got3D != 0)
-        this.got3DPoints = true;
-    
-		this.fit3DError = readFloat(data);
-    
-		this.rawQuaternion = readQuaternion(data);
-    let convertedQuaternion = new Quaternion({
-			x: -this.rawQuaternion.x,
-			y:  this.rawQuaternion.y,
-			z: -this.rawQuaternion.z,
-			w:  this.rawQuaternion.w
-		});
-    
-		this.rawEuler = readVector3(data);
+		console.log(`time ${this.time}`);
+    //this.id = readInt(data);
+		//console.log(`id ${this.id}`);
+    //this.cameraResolution = readVector2(data);
+		//console.log(`cameraResolution ${this.cameraResolution}`);
+    //this.rightEyeOpen = readFloat(data);
+		//console.log(`rightEyeOpen ${this.rightEyeOpen}`);
+    //this.leftEyeOpen = readFloat(data);
+		//console.log(`leftEyeOpen ${this.leftEyeOpen}`);
+    //
+		//let got3D = data.buffer[data.offset];
+		//console.log(`got3D ${got3D}`);
+    //data.offset++;
+    //if (got3D != 0)
+    //    this.got3DPoints = true;
+    //
+		//this.fit3DError = readFloat(data);
+		//console.log(`fit3DError ${this.fit3DError}`);
+    //
+		//this.rawQuaternion = readQuaternion(data);
+    //let convertedQuaternion = new Quaternion({
+		//	x: -this.rawQuaternion.x,
+		//	y:  this.rawQuaternion.y,
+		//	z: -this.rawQuaternion.z,
+		//	w:  this.rawQuaternion.w
+		//});
+    //
+		//this.rawEuler = readVector3(data);
+		//console.log(`rawEuler ${this.rawEuler.x}, ${this.rawEuler.y}, ${this.rawEuler.z}`);
 
-    this.rotation = this.rawEuler * 1;
-    this.rotation.z = (this.rotation.z - 90) % 360;
-    this.rotation.x = -(this.rotation.x + 180) % 360;
+    //this.rotation = this.rawEuler * 1;
+		//console.log(`rotation ${this.rotation.x}, ${this.rotation.y}, ${this.rotation.z}`);
+    //this.rotation.z = (this.rotation.z - 90) % 360;
+    //this.rotation.x = -(this.rotation.x + 180) % 360;
 
-    let x = readFloat(data);
-    let y = readFloat(data);
-    let z = readFloat(data);
-    this.translation = new Vector3({y: -y, x: x, z: -z});
+    //let x = readFloat(data);
+    //let y = readFloat(data);
+    //let z = readFloat(data);
+    //this.translation = new Vector3({y: -y, x: x, z: -z});
 
-    for (let i = 0; i < nPoints; i++) {
-      this.confidence[i] = readFloat(data);
-    }
+    //for (let i = 0; i < nPoints; i++) {
+    //  this.confidence[i] = readFloat(data);
+    //}
 
-    for (let i = 0; i < nPoints; i++) {
-      this.points[i] = readVector2(data);
-    }
+    //for (let i = 0; i < nPoints; i++) {
+    //  this.points[i] = readVector2(data);
+    //}
 
-    for (let i = 0; i < nPoints + 2; i++) {
-      this.points3D[i] = readVector3(data);
-    }
-    
-		// rightGaze = THREE.Quaternion.LookRotation(swapX(points3D[66]) - swapX(points3D[68])) * Quaternion.AngleAxis(180, Vector3.right) * Quaternion.AngleAxis(180, Vector3.forward);
-    this.rightGaze = Quaternion.setFromUnitVectors(swapX(points3D[66]), swapX(points3D[68])) * Quaternion.setFromAxisAngle(Vector3.right, 180) * Quaternion.setFromAxisAngle(Vector3.forward, 180);
-    this.leftGaze = Quaternion.setFromUnitVectors(swapX(points3D[67]), swapX(points3D[69])) * Quaternion.setFromAxisAngle(Vector3.right, 180) * Quaternion.setFromAxisAngle(Vector3.forward, 180);
-    
-    this.features.EyeLeft = readFloat(data);
-    this.features.EyeRight = readFloat(data);
-    this.features.EyebrowSteepnessLeft = readFloat(data);
-    this.features.EyebrowUpDownLeft = readFloat(data);
-    this.features.EyebrowQuirkLeft = readFloat(data);
-    this.features.EyebrowSteepnessRight = readFloat(data);
-    this.features.EyebrowUpDownRight = readFloat(data);
-    this.features.EyebrowQuirkRight = readFloat(data);
-    this.features.MouthCornerUpDownLeft = readFloat(data);
-    this.features.MouthCornerInOutLeft = readFloat(data);
-    this.features.MouthCornerUpDownRight = readFloat(data);
-    this.features.MouthCornerInOutRight = readFloat(data);
-    this.features.MouthOpen = readFloat(data);
-    this.features.MouthWide = readFloat(data);
+    //for (let i = 0; i < nPoints + 2; i++) {
+    //  this.points3D[i] = readVector3(data);
+    //}
+    //
+		//// rightGaze = THREE.Quaternion.LookRotation(swapX(points3D[66]) - swapX(points3D[68])) * Quaternion.AngleAxis(180, Vector3.right) * Quaternion.AngleAxis(180, Vector3.forward);
+    //this.rightGaze = Quaternion.setFromUnitVectors(swapX(points3D[66]), swapX(points3D[68])) * Quaternion.setFromAxisAngle(Vector3.right, 180) * Quaternion.setFromAxisAngle(Vector3.forward, 180);
+    //this.leftGaze = Quaternion.setFromUnitVectors(swapX(points3D[67]), swapX(points3D[69])) * Quaternion.setFromAxisAngle(Vector3.right, 180) * Quaternion.setFromAxisAngle(Vector3.forward, 180);
+    //
+    //this.features.EyeLeft = readFloat(data);
+    //this.features.EyeRight = readFloat(data);
+    //this.features.EyebrowSteepnessLeft = readFloat(data);
+    //this.features.EyebrowUpDownLeft = readFloat(data);
+    //this.features.EyebrowQuirkLeft = readFloat(data);
+    //this.features.EyebrowSteepnessRight = readFloat(data);
+    //this.features.EyebrowUpDownRight = readFloat(data);
+    //this.features.EyebrowQuirkRight = readFloat(data);
+    //this.features.MouthCornerUpDownLeft = readFloat(data);
+    //this.features.MouthCornerInOutLeft = readFloat(data);
+    //this.features.MouthCornerUpDownRight = readFloat(data);
+    //this.features.MouthCornerInOutRight = readFloat(data);
+    //this.features.MouthOpen = readFloat(data);
+    //this.features.MouthWide = readFloat(data);
   }
 }
 

@@ -11,22 +11,17 @@ let socket;
 let stopReception = false;
 
 function performReception(buffer){
-  while (!stopReception) {
-    receivedBytes = Buffer.byteLength(buffer);
-    if (receivedBytes < 1 || receivedBytes % packetFrameSize !== 0) {
-      continue;
-    }
-		let i = 0;
-    for (let offset = 0; offset < receivedBytes; offset += packetFrameSize) {
-        let newData = new OpenSeeData();
-        newData.readFromPacket({buffer, offset});
-        openSeeDataMap[newData.id] = newData;
-        i++;
-    }
-    trackingData = new OpenSeeData[openSeeDataMap.Count];
-    openSeeDataMap.Values.CopyTo(trackingData, 0);
-    
+  receivedBytes = Buffer.byteLength(buffer);
+  if (receivedBytes < 1 || receivedBytes % packetFrameSize !== 0) {
+    return;
   }
+  for (let offset = 0; offset < receivedBytes; offset += packetFrameSize) {
+      let newData = new OpenSeeData();
+      newData.readFromPacket({buffer, offset});
+      openSeeDataMap[newData.id] = newData;
+  }
+  //trackingData = new OpenSeeData[openSeeDataMap.Count];
+  //openSeeDataMap.Values.CopyTo(trackingData, 0);
 }
 
 function start(){
