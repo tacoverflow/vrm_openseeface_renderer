@@ -1,4 +1,5 @@
 const THREE = require('three');
+const { Object3D } = THREE;
 
 const nPoints = 68;
 
@@ -176,25 +177,43 @@ class OpenSeeData {
     for (let i = 0; i < nPoints + 2; i++) {
       this.points3D[i] = readVector3(data);
     }
-    let qRight = new Quaternion();
-    this.rightGaze = qRight.setFromUnitVectors(swapX(this.points3D[66]), swapX(this.points3D[68])) * qRight.setFromAxisAngle(Vector3.right, 180) * qRight.setFromAxisAngle(Vector3.forward, 180);
-		console.log(`right gaze: ${this.rightGaze.x}, ${this.rightGaze.y}, ${this.rightGaze.z}`);
-    //this.leftGaze = Quaternion.setFromUnitVectors(swapX(points3D[67]), swapX(points3D[69])) * Quaternion.setFromAxisAngle(Vector3.right, 180) * Quaternion.setFromAxisAngle(Vector3.forward, 180);
-    //
-    //this.features.EyeLeft = readFloat(data);
-    //this.features.EyeRight = readFloat(data);
-    //this.features.EyebrowSteepnessLeft = readFloat(data);
-    //this.features.EyebrowUpDownLeft = readFloat(data);
-    //this.features.EyebrowQuirkLeft = readFloat(data);
-    //this.features.EyebrowSteepnessRight = readFloat(data);
-    //this.features.EyebrowUpDownRight = readFloat(data);
-    //this.features.EyebrowQuirkRight = readFloat(data);
-    //this.features.MouthCornerUpDownLeft = readFloat(data);
-    //this.features.MouthCornerInOutLeft = readFloat(data);
-    //this.features.MouthCornerUpDownRight = readFloat(data);
-    //this.features.MouthCornerInOutRight = readFloat(data);
-    //this.features.MouthOpen = readFloat(data);
-    //this.features.MouthWide = readFloat(data);
+    let rEye = new Object3D();
+    rEye.position.set(
+      (this.points3D[66].x * -1),
+      this.points3D[66].y,
+      this.points3D[66].z,
+    );
+    rEye.lookAt(swapX(this.points3D[68]));
+    rEye.rotateOnAxis(Vector3.right, 180);
+    rEye.rotateOnAxis(Vector3.forward, 180);
+    this.rightGaze = rEye.quaternion;
+    
+    let lEye = new Object3D();
+    lEye.position.set(
+      (this.points3D[67].x * -1),
+      this.points3D[67].y,
+      this.points3D[67].z,
+    );
+    lEye.lookAt(swapX(this.points3D[69]));
+    lEye.rotateOnAxis(Vector3.right, 180);
+    lEye.rotateOnAxis(Vector3.forward, 180);
+    this.leftGaze = lEye.quaternion;
+
+    console.log(`rGaze: ${JSON.stringify(this.rightGaze)}, lGaze: ${JSON.stringify(this.leftGaze)}`);
+    this.features.EyeLeft = readFloat(data);
+    this.features.EyeRight = readFloat(data);
+    this.features.EyebrowSteepnessLeft = readFloat(data);
+    this.features.EyebrowUpDownLeft = readFloat(data);
+    this.features.EyebrowQuirkLeft = readFloat(data);
+    this.features.EyebrowSteepnessRight = readFloat(data);
+    this.features.EyebrowUpDownRight = readFloat(data);
+    this.features.EyebrowQuirkRight = readFloat(data);
+    this.features.MouthCornerUpDownLeft = readFloat(data);
+    this.features.MouthCornerInOutLeft = readFloat(data);
+    this.features.MouthCornerUpDownRight = readFloat(data);
+    this.features.MouthCornerInOutRight = readFloat(data);
+    this.features.MouthOpen = readFloat(data);
+    this.features.MouthWide = readFloat(data);
   }
 }
 
